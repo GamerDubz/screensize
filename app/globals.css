@@ -40,24 +40,7 @@ html, body {
 }
 
 body {
-  background:
-    repeating-linear-gradient(
-      0deg,
-      var(--bg-grid) 0, var(--bg-grid) 1px, transparent 1px, transparent 8px
-    ),
-    repeating-linear-gradient(
-      90deg,
-      var(--bg-grid) 0, var(--bg-grid) 1px, transparent 1px, transparent 8px
-    ),
-    repeating-linear-gradient(
-      0deg,
-      var(--bg-grid-major) 0, var(--bg-grid-major) 1px, transparent 1px, transparent 64px
-    ),
-    repeating-linear-gradient(
-      90deg,
-      var(--bg-grid-major) 0, var(--bg-grid-major) 1px, transparent 1px, transparent 64px
-    ),
-    var(--bg);
+  background: var(--bg);
   color: var(--ink);
   font-family: var(--font-sans);
   font-size: 16px;
