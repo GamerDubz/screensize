@@ -7,6 +7,9 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'ScreenSize — Viewport & Screen Inspector',
   description: 'Real-time viewport size, breakpoint detection, device info, and responsive design testing tool.',
+  icons: {
+    icon: '/favicon.svg',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

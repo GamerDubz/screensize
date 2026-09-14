@@ -27,13 +27,6 @@ const COMMON_DEVICES = [
   { name: '4K UHD', width: 3840, height: 2160 },
 ]
 
-function getDeviceIcon(width: number) {
-  if (width < 768) return Smartphone
-  if (width < 1024) return Tablet
-  if (width < 1440) return Laptop
-  return Monitor
-}
-
 function getBreakpoint(width: number): Breakpoint {
   return TAILWIND_BREAKPOINTS.find((bp) => width >= bp.min && width <= bp.max) ?? TAILWIND_BREAKPOINTS[0]
 }
@@ -57,15 +50,24 @@ function useScreenInfo() {
     darkMode: false, online: true,
   })
   useEffect(() => {
-    setInfo({
-      screenWidth: screen.width, screenHeight: screen.height,
-      pixelRatio: window.devicePixelRatio ?? 1,
-      colorDepth: screen.colorDepth,
-      orientation: screen.width > screen.height ? 'landscape' : 'portrait',
-      touchSupport: 'ontouchstart' in window,
-      darkMode: window.matchMedia('(prefers-color-scheme: dark)').matches,
-      online: navigator.onLine,
-    })
+    const update = () => {
+      setInfo({
+        screenWidth: window.screen.width,
+        screenHeight: window.screen.height,
+        pixelRatio: window.devicePixelRatio ?? 1,
+        colorDepth: window.screen.colorDepth,
+        orientation: window.screen.width > window.screen.height ? 'landscape' : 'portrait',
+        touchSupport: 'ontouchstart' in window,
+        darkMode: window.matchMedia('(prefers-color-scheme: dark)').matches,
+        online: navigator.onLine,
+      })
+    }
+    const rafId = requestAnimationFrame(update)
+    window.addEventListener('resize', update)
+    return () => {
+      cancelAnimationFrame(rafId)
+      window.removeEventListener('resize', update)
+    }
   }, [])
   return info
 }
@@ -98,18 +100,40 @@ export default function ScreenSizePage() {
   const { width, height } = useViewport()
   const screen = useScreenInfo()
   const bp = getBreakpoint(width)
-  const DeviceIcon = getDeviceIcon(width)
 
   const summaryText = `Viewport: ${width}×${height} | Breakpoint: ${bp.name} | DPR: ${screen.pixelRatio} | Screen: ${screen.screenWidth}×${screen.screenHeight}`
 
   return (
-    <div className="min-h-full bg-[#0f0f0f] text-neutral-100 p-6 md:p-10">
-      <header className="mb-8">
-        <div className="flex items-center gap-3 mb-1">
-          <Monitor className="w-5 h-5 text-neutral-400" />
-          <h1 className="text-xl font-semibold tracking-tight">ScreenSize</h1>
+    <div className="min-h-full bg-[#0A0E1A] text-slate-100 p-6 md:p-10 selection:bg-sky-500 selection:text-white">
+      <header className="mb-8 flex items-center justify-between pb-5 border-b border-slate-800">
+        <div className="flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 via-indigo-600 to-emerald-500 p-0.5 shadow-lg shadow-sky-500/20 flex items-center justify-center">
+            <svg className="w-full h-full p-1.5" viewBox="0 0 32 32" fill="none">
+              <rect x="5" y="6" width="22" height="15" rx="2" stroke="#38BDF8" strokeWidth="1.6"/>
+              <line x1="16" y1="21" x2="16" y2="25" stroke="#94A3B8" strokeWidth="1.8" strokeLinecap="round"/>
+              <line x1="12" y1="25" x2="20" y2="25" stroke="#94A3B8" strokeWidth="1.8" strokeLinecap="round"/>
+              <rect x="19" y="10" width="7" height="10" rx="1.5" fill="#0F172A" stroke="#34D399" strokeWidth="1.2"/>
+              <circle cx="22.5" cy="18.5" r="0.6" fill="#34D399"/>
+            </svg>
+          </div>
+          <div>
+            <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+              ScreenSize
+              <span className="text-[11px] px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-300 border border-sky-500/30 font-medium">
+                Viewport
+              </span>
+            </h1>
+            <p className="text-xs text-slate-400">Real-time viewport inspector &amp; breakpoint detector</p>
+          </div>
         </div>
-        <p className="text-sm text-neutral-500">Real-time viewport inspector & breakpoint detector</p>
+        <div className="hidden sm:flex items-center gap-2 text-xs">
+          <span className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 font-mono">
+            DPR: {screen.pixelRatio}x
+          </span>
+          <span className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 capitalize">
+            {screen.orientation}
+          </span>
+        </div>
       </header>
 
       {/* Hero — live viewport size */}
@@ -119,7 +143,15 @@ export default function ScreenSizePage() {
       >
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-2">
-            <DeviceIcon className="w-5 h-5" style={{ color: bp.color }} />
+            {width < 768 ? (
+              <Smartphone className="w-5 h-5" style={{ color: bp.color }} />
+            ) : width < 1024 ? (
+              <Tablet className="w-5 h-5" style={{ color: bp.color }} />
+            ) : width < 1440 ? (
+              <Laptop className="w-5 h-5" style={{ color: bp.color }} />
+            ) : (
+              <Monitor className="w-5 h-5" style={{ color: bp.color }} />
+            )}
             <span className="text-sm font-medium" style={{ color: bp.color }}>Tailwind `{bp.name}` breakpoint</span>
           </div>
           <div className="flex items-baseline gap-3">
@@ -183,13 +215,20 @@ export default function ScreenSizePage() {
         <div className="grid gap-2">
           {COMMON_DEVICES.map((dev) => {
             const fits = width >= dev.width
-            const DevIcon = getDeviceIcon(dev.width)
             return (
               <div
                 key={dev.name}
                 className="flex items-center gap-4 bg-[#1a1a1a] border border-[#2e2e2e] rounded-lg px-4 py-3"
               >
-                <DevIcon className="w-4 h-4 text-neutral-600 shrink-0" />
+                {dev.width < 768 ? (
+                  <Smartphone className="w-4 h-4 text-neutral-600 shrink-0" />
+                ) : dev.width < 1024 ? (
+                  <Tablet className="w-4 h-4 text-neutral-600 shrink-0" />
+                ) : dev.width < 1440 ? (
+                  <Laptop className="w-4 h-4 text-neutral-600 shrink-0" />
+                ) : (
+                  <Monitor className="w-4 h-4 text-neutral-600 shrink-0" />
+                )}
                 <span className="flex-1 text-sm text-neutral-300">{dev.name}</span>
                 <span className="text-xs text-neutral-500 font-mono">{dev.width}×{dev.height}</span>
                 <span
